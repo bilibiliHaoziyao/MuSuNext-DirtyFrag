@@ -1,0 +1,63 @@
+diff --git a/app/src/main/java/df/root/ExploitRunner.java b/app/src/main/java/df/root/ExploitRunner.java
+index 459df47..119bf59 100644
+--- a/app/src/main/java/df/root/ExploitRunner.java
++++ b/app/src/main/java/df/root/ExploitRunner.java
+@@ -24,6 +24,9 @@ public class ExploitRunner {
+     static final String PREFS_NAME       = "dfroot";
+     static final String PREF_SOFT_REBOOT = "soft_reboot";
+     static final String PREF_SU_MANAGER  = "su_manager";
++    /** MuSu Next fork: the only SU manager this build accepts. Its libksud.so is
++     *  the staging source; a selection outside this constant is refused. */
++    static final String LOCKED_MANAGER   = "org.musu.next";
+     private static final String NATIVE_BIN    = "libdfroot.so";
+ 
+     private static String getSystemProperty(String key, String def) {
+@@ -76,6 +79,11 @@ public class ExploitRunner {
+             reporter.report("no SU manager selected\n");
+             return 2;
+         }
++        // MuSu Next fork: whitelist. Only LOCKED_MANAGER may provide libksud.so.
++        if (!LOCKED_MANAGER.equals(suManagerPackage)) {
++            reporter.report("unsupported SU manager: " + suManagerPackage + "\n");
++            return 2;
++        }
+         android.content.pm.ApplicationInfo app;
+         try {
+             app = ctx.getPackageManager().getApplicationInfo(suManagerPackage, 0);
+diff --git a/app/src/main/java/df/root/MainActivity.java b/app/src/main/java/df/root/MainActivity.java
+index 45e761b..e4c71ee 100644
+--- a/app/src/main/java/df/root/MainActivity.java
++++ b/app/src/main/java/df/root/MainActivity.java
+@@ -91,6 +91,8 @@ public class MainActivity extends Activity implements IReporter {
+      *  /data/user_de/0/df.root/, so every pref the exploit depends on must live
+      *  there, not in credential-protected storage. */
+     private Context mDeCtx;
++    /** MuSu Next fork: the whitelisted SU manager, whose libksud.so is staged. */
++    private static final String LOCKED_MANAGER = "org.musu.next";
+     /** Package name of the SU manager whose libksud.so gets staged, or null. */
+     private String suManagerPkg;
+     private CharSequence suManagerLabel;
+@@ -1324,6 +1326,23 @@ public class MainActivity extends Activity implements IReporter {
+             if (!new File(ai.nativeLibraryDir, "libksud.so").exists()) continue;
+             out.add(new SuManagerEntry(ai.packageName, pm.getApplicationLabel(ai)));
+         }
++        // MuSu Next fork: explicit whitelist entry. LOCKED_MANAGER is offered
++        // whenever it is installed and ships libksud.so, even if the generic
++        // label lookup skipped it.
++        try {
++            ApplicationInfo locked = pm.getApplicationInfo(LOCKED_MANAGER, 0);
++            if (ExploitRunner.hasKsud(locked)) {
++                boolean present = false;
++                for (SuManagerEntry e : out) {
++                    if (LOCKED_MANAGER.equals(e.packageName)) { present = true; break; }
++                }
++                if (!present) {
++                    out.add(new SuManagerEntry(LOCKED_MANAGER, pm.getApplicationLabel(locked)));
++                }
++            }
++        } catch (PackageManager.NameNotFoundException ignored) {
++            // Not installed here; the runtime guard in ExploitRunner still holds.
++        }
+         out.sort((a, b) -> a.label.toString().compareToIgnoreCase(b.label.toString()));
+         return out;
+     }

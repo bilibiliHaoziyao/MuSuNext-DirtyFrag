@@ -1,0 +1,41 @@
+DirtyFrag — MuSu Next locked fork
+==================================
+
+Upstream
+--------
+DirtyFrag: https://github.com/mitschud/DirtyFrag
+Upstream tag: v1.18
+Upstream commit: 3bad3cd6f7a9ce0a5536d900af264be2645d1512
+Upstream date: 2026-11-17
+Upstream license: GPL-2.0-only
+
+Upstream copyright notice (verbatim from the upstream README, License section):
+"GPL-2.0-only - the full text is in LICENSE, the file upstream added in 4ec133c
+because the upstream maintainer asked for one. Upstream keeps its own copyright
+on its code; everything this fork adds on top of it is licensed under the same
+GPL-2.0-only, from the 1.17 merge onward."
+
+MuSu Next modifications
+-----------------------
+Modifications Copyright (C) 2026 MuSu Next
+All modifications are licensed under GPL-2.0-only, the same license as the
+upstream work. The complete modified source is provided in this repository
+(dirtyfrag/upstream/ source tree plus dirtyfrag/patches/), per GPL-2.0 §3.
+
+Modification list (one-to-one with dirtyfrag/patches/):
+  0001-add-musu-manager.patch
+      Added org.musu.next (MuSu Next, package org.musu.next) to the accepted
+      SU-manager set; libksud.so is staged from that manager; a runtime guard
+      refuses any other manager selection.
+  0002-locked-mode.patch
+      Added locked mode: intent extra
+      "org.musu.next.dirtyfrag.LOCKED_MANAGER" with value "org.musu.next"
+      pins the manager and skips the SU-manager chooser UI.
+  0003-no-launcher.patch
+      Removed the android.intent.category.LAUNCHER category so the engine has
+      no standalone launcher icon; it is started by MuSu Next via an explicit
+      component name.
+
+The kernel modules in app/src/main/jni/ko/ are unmodified upstream binaries
+from the commit named above; they are shipped as-is with their original
+sha256 values recorded in README.md and SOURCE.txt.

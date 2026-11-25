@@ -1,0 +1,10 @@
+# Zero androidx on purpose: the UI is drawn from framework widgets plus the custom
+# views in df.root. appcompat, material, constraintlayout and viewbinding are all
+# gone - see the dependency-diet entry under "Unreleased" in CHANGELOG.md for why.
+[versions]
+agp = "9.4.0"
+
+[libraries]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }

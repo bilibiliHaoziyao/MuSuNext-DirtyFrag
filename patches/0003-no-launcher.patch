@@ -1,0 +1,15 @@
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 1b60136..fc0afe8 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -25,7 +25,9 @@
+             android:screenOrientation="portrait">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+-                <category android:name="android.intent.category.LAUNCHER" />
++                <!-- MuSu Next fork: no LAUNCHER category on purpose. The engine
++                     has no launcher icon; MuSu Next starts it by explicit
++                     component name with EXTRA_LOCKED_MANAGER. -->
+             </intent-filter>
+         </activity>
+ 

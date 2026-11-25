@@ -1,0 +1,79 @@
+diff --git a/app/src/main/java/df/root/MainActivity.java b/app/src/main/java/df/root/MainActivity.java
+index e4c71ee..c6764c2 100644
+--- a/app/src/main/java/df/root/MainActivity.java
++++ b/app/src/main/java/df/root/MainActivity.java
+@@ -37,6 +37,8 @@ import java.util.concurrent.Executors;
+ public class MainActivity extends Activity implements IReporter {
+ 
+     private static final String TAG = "dfroot";
++    /** MuSu Next fork: intent extra that pins the SU manager in locked mode. */
++    public static final String EXTRA_LOCKED_MANAGER = "org.musu.next.dirtyfrag.LOCKED_MANAGER";
+ 
+     private ActivityMainBinding binding;
+     private final Handler mMain = new Handler(Looper.getMainLooper());
+@@ -96,6 +98,10 @@ public class MainActivity extends Activity implements IReporter {
+     /** Package name of the SU manager whose libksud.so gets staged, or null. */
+     private String suManagerPkg;
+     private CharSequence suManagerLabel;
++    /** MuSu Next fork: launched with EXTRA_LOCKED_MANAGER; chooser is skipped. */
++    private boolean lockedMode;
++    /** MuSu Next fork: the caller supplied a wrong locked-manager value. */
++    private boolean lockedManagerRejected;
+     /** A failed run locks the Run button until reboot (page-cache patch). */
+     private boolean failedRun;
+     /** Raw "***FAILED***: ..." text from the exploit, used for the failure log. */
+@@ -576,11 +582,30 @@ public class MainActivity extends Activity implements IReporter {
+         // exploit stages libksud.so out of the chosen manager's
+         // nativeLibraryDir and refuses to run without one. Only apps that
+         // actually ship that library are offered.
++        // MuSu Next fork: locked mode. Started via an explicit component name
++        // with EXTRA_LOCKED_MANAGER, the manager is pinned and no chooser opens.
++        String lockedExtra = getIntent() != null
++                ? getIntent().getStringExtra(EXTRA_LOCKED_MANAGER) : null;
++        if (lockedExtra != null) {
++            lockedMode = true;
++            if (ExploitRunner.LOCKED_MANAGER.equals(lockedExtra)) {
++                mDeCtx.getSharedPreferences("dfroot", MODE_PRIVATE)
++                        .edit().putString("su_manager", ExploitRunner.LOCKED_MANAGER).apply();
++            } else {
++                lockedManagerRejected = true;
++                Log.e(TAG, "locked manager mismatch: " + lockedExtra);
++            }
++        }
+         loadSuManagerPref();
+-        binding.rowSuManager.setOnClickListener(v -> {
+-            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+-            showSuManagerPopup();
+-        });
++        if (lockedMode) {
++            binding.rowSuManager.setOnClickListener(null);
++            binding.chevronSuManager.setVisibility(View.GONE);
++        } else {
++            binding.rowSuManager.setOnClickListener(v -> {
++                v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
++                showSuManagerPopup();
++            });
++        }
+ 
+         // KSU modules toggle: since 3.2 this is a plain preference, not a root
+         // operation. bootstrap.c reads disable_modules and touches a `disable`
+@@ -1364,6 +1389,10 @@ public class MainActivity extends Activity implements IReporter {
+             }
+             if (suManagerPkg == null) sp.edit().remove("su_manager").apply();
+         }
++        if (lockedMode && !lockedManagerRejected) {
++            suManagerPkg = ExploitRunner.LOCKED_MANAGER;
++            suManagerLabel = "MuSu Next";
++        }
+         binding.suManagerSubtitle.setText(suManagerPkg == null
+                 ? getString(R.string.su_manager_required)
+                 : getString(R.string.su_manager_selected, suManagerLabel, suManagerPkg));
+@@ -1503,7 +1532,7 @@ public class MainActivity extends Activity implements IReporter {
+      * that cannot do anything except cost the user the tap. See RootState.
+      */
+     private boolean canRun() {
+-        return suManagerPkg != null && !failedRun && !RootState.hooked();
++        return !lockedManagerRejected && suManagerPkg != null && !failedRun && !RootState.hooked();
+     }
+ 
+     /** Single place that decides the Run pill's look and enabled state. */

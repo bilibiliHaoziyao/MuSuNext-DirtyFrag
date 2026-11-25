@@ -1,0 +1,7 @@
+upstream=DirtyFrag
+upstream_url=https://github.com/mitschud/DirtyFrag
+upstream_tag=v1.18
+upstream_commit=3bad3cd6f7a9ce0a5536d900af264be2645d1512
+upstream_date=2026-11-17
+license=GPL-2.0-only
+note=Fork: added org.musu.next manager, locked mode (no chooser), launcher category removed. Modifications under GPL-2.0-only; see patches/ and NOTICE.
